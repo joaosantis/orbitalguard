@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DimDim Bank</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid #1e40af44;
+    }
+
+    .logo {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 900; color: #fff;
+    }
+
+    header h1 { font-size: 1.5rem; font-weight: 700; color: #fff; }
+    header span { font-size: 0.85rem; color: #94a3b8; }
+
+    .status-dot {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.8rem; color: #94a3b8;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e;
+      animation: pulse 2s infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+
+    nav {
+      background: #0f172a;
+      padding: 0 40px;
+      display: flex; gap: 4px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    nav button {
+      background: none; border: none; cursor: pointer;
+      padding: 16px 24px;
+      font-size: 0.9rem; font-weight: 600;
+      color: #64748b;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    nav button:hover { color: #94a3b8; }
+    nav button.active { color: #3b82f6; border-bottom-color: #3b82f6; }
+
+    .badge {
+      background: #1e3a5f; color: #60a5fa;
+      font-size: 0.7rem; padding: 2px 7px; border-radius: 20px;
+      margin-left: 6px; font-weight: 700;
+    }
+
+    main { padding: 32px 40px; max-width: 1200px; margin: 0 auto; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .section-header h2 { font-size: 1.2rem; font-weight: 700; color: #f1f5f9; }
+    .section-header p { font-size: 0.85rem; color: #64748b; margin-top: 2px; }
+
+    .btn-refresh {
+      background: #1e293b; border: 1px solid #334155;
+      color: #94a3b8; padding: 8px 16px; border-radius: 8px;
+      cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-refresh:hover { background: #334155; color: #e2e8f0; }
+    .spin { animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    table {
+      width: 100%; border-collapse: collapse;
+      background: #1e293b; border-radius: 12px; overflow: hidden;
+    }
+    thead tr { background: #0f172a; }
+    th {
+      padding: 14px 16px; text-align: left;
+      font-size: 0.75rem; font-weight: 700; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    td { padding: 14px 16px; font-size: 0.875rem; border-top: 1px solid #0f172a; }
+    tr:hover td { background: #263348; }
+
+    .chip {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 600;
+    }
+    .chip-blue   { background: #1e3a5f; color: #60a5fa; }
+    .chip-green  { background: #14532d; color: #4ade80; }
+    .chip-yellow { background: #422006; color: #fbbf24; }
+    .chip-purple { background: #3b0764; color: #c084fc; }
+    .chip-red    { background: #450a0a; color: #f87171; }
+    .chip-teal   { background: #042f2e; color: #2dd4bf; }
+
+    .mono { font-family: monospace; font-size: 0.82rem; color: #94a3b8; }
+
+    .loading {
+      text-align: center; padding: 60px 0; color: #475569;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .spinner {
+      width: 32px; height: 32px; border: 3px solid #1e293b;
+      border-top-color: #3b82f6; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .error-box {
+      background: #450a0a; border: 1px solid #7f1d1d;
+      color: #fca5a5; padding: 16px 20px; border-radius: 10px;
+      font-size: 0.875rem;
+    }
+
+    .stats {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: #1e293b; border-radius: 12px; padding: 20px 24px;
+      border: 1px solid #334155;
+    }
+    .stat-card .label { font-size: 0.75rem; color: #64748b; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-card .value { font-size: 1.8rem; font-weight: 800; color: #f1f5f9;
+      margin-top: 6px; }
+    .stat-card .sub { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
+
+    .saldo-pos { color: #4ade80; }
+    .saldo-neg { color: #f87171; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">D$</div>
+  <div>
+    <h1>DimDim Bank</h1>
+    <span>Painel Administrativo</span>
+  </div>
+  <div class="status-dot">
+    <div class="dot"></div>
+    API conectada · 172.202.120.139:8080
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('clientes')">
+    Clientes <span class="badge" id="badge-clientes">…</span>
+  </button>
+  <button onclick="showTab('contas')">
+    Contas <span class="badge" id="badge-contas">…</span>
+  </button>
+  <button onclick="showTab('transacoes')">
+    Transações <span class="badge" id="badge-transacoes">…</span>
+  </button>
+</nav>
+
+<main>
+
+  <!-- CLIENTES -->
+  <div class="section active" id="tab-clientes">
+    <div class="section-header">
+      <div>
+        <h2>Clientes cadastrados</h2>
+        <p>Base de clientes do banco DimDim</p>
+      </div>
+      <button class="btn-refresh" onclick="loadClientes()">↻ Atualizar</button>
+    </div>
+    <div id="clientes-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  </div>
+
+  <!-- CONTAS -->
+  <div class="section" id="tab-contas">
+    <div class="section-header">
+      <div>
+        <h2>Contas bancárias</h2>
+        <p>Todas as contas ativas no sistema</p>
+      </div>
+      <button class="btn-refresh" onclick="loadContas()">↻ Atualizar</button>
+    </div>
+    <div id="contas-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  </div>
+
+  <!-- TRANSACOES -->
+  <div class="section" id="tab-transacoes">
+    <div class="section-header">
+      <div>
+        <h2>Transações</h2>
+        <p>Histórico de movimentações financeiras</p>
+      </div>
+      <button class="btn-refresh" onclick="loadTransacoes()">↻ Atualizar</button>
+    </div>
+    <div id="transacoes-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  </div>
+
+</main>
+
+<script>
+  const API = 'http://172.202.120.139:8080';
+
+  function showTab(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  function tipoChip(tipo) {
+    const map = {
+      CORRENTE: 'chip-blue', POUPANCA: 'chip-green', SALARIO: 'chip-purple',
+      DEPOSITO: 'chip-green', SAQUE: 'chip-red', PIX: 'chip-teal',
+      TED: 'chip-yellow', DOC: 'chip-yellow', TRANSFERENCIA: 'chip-purple'
+    };
+    return `<span class="chip ${map[tipo] || 'chip-blue'}">${tipo}</span>`;
+  }
+
+  function fmt(val) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('pt-BR');
+  }
+
+  function fmtDateTime(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  }
+
+  async function loadClientes() {
+    const el = document.getElementById('clientes-content');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+    try {
+      const res = await fetch(API + '/clientes');
+      const data = await res.json();
+      document.getElementById('badge-clientes').textContent = data.length;
+      el.innerHTML = `
+        <table>
+          <thead><tr>
+            <th>#</th><th>Nome</th><th>CPF</th><th>Email</th><th>Telefone</th><th>Nascimento</th>
+          </tr></thead>
+          <tbody>
+            ${data.map(c => `
+              <tr>
+                <td class="mono">${c.id}</td>
+                <td><strong>${c.nome}</strong></td>
+                <td class="mono">${c.cpf}</td>
+                <td>${c.email}</td>
+                <td>${c.telefone}</td>
+                <td>${fmtDate(c.dataNascimento)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+    } catch(e) {
+      el.innerHTML = `<div class="error-box">Erro ao conectar na API: ${e.message}</div>`;
+    }
+  }
+
+  async function loadContas() {
+    const el = document.getElementById('contas-content');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+    try {
+      const res = await fetch(API + '/contas');
+      const data = await res.json();
+      document.getElementById('badge-contas').textContent = data.length;
+      const total = data.reduce((s, c) => s + c.saldo, 0);
+      el.innerHTML = `
+        <div class="stats">
+          <div class="stat-card">
+            <div class="label">Total de contas</div>
+            <div class="value">${data.length}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Saldo total</div>
+            <div class="value saldo-pos">${fmt(total)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Tipos</div>
+            <div class="value">${[...new Set(data.map(c=>c.tipo))].length}</div>
+            <div class="sub">Corrente · Poupança · Salário</div>
+          </div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>#</th><th>Número</th><th>Tipo</th><th>Saldo</th><th>Abertura</th><th>Cliente ID</th>
+          </tr></thead>
+          <tbody>
+            ${data.map(c => `
+              <tr>
+                <td class="mono">${c.id}</td>
+                <td class="mono">${c.numeroConta}</td>
+                <td>${tipoChip(c.tipo)}</td>
+                <td class="${c.saldo >= 0 ? 'saldo-pos' : 'saldo-neg'}">${fmt(c.saldo)}</td>
+                <td>${fmtDate(c.dataAbertura)}</td>
+                <td class="mono">${c.clienteId}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+    } catch(e) {
+      el.innerHTML = `<div class="error-box">Erro ao conectar na API: ${e.message}</div>`;
+    }
+  }
+
+  async function loadTransacoes() {
+    const el = document.getElementById('transacoes-content');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+    try {
+      const res = await fetch(API + '/transacoes');
+      const data = await res.json();
+      document.getElementById('badge-transacoes').textContent = data.length;
+      const totalMov = data.reduce((s, t) => s + t.valor, 0);
+      el.innerHTML = `
+        <div class="stats">
+          <div class="stat-card">
+            <div class="label">Total de transações</div>
+            <div class="value">${data.length}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Volume movimentado</div>
+            <div class="value saldo-pos">${fmt(totalMov)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Tipos de operação</div>
+            <div class="value">${[...new Set(data.map(t=>t.tipo))].length}</div>
+            <div class="sub">PIX · TED · DOC · Depósito · Saque</div>
+          </div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>#</th><th>Tipo</th><th>Valor</th><th>Descrição</th><th>Data</th><th>Conta ID</th>
+          </tr></thead>
+          <tbody>
+            ${data.map(t => `
+              <tr>
+                <td class="mono">${t.id}</td>
+                <td>${tipoChip(t.tipo)}</td>
+                <td class="${t.tipo==='SAQUE'?'saldo-neg':'saldo-pos'}">${fmt(t.valor)}</td>
+                <td>${t.descricao || '—'}</td>
+                <td>${fmtDateTime(t.dataTransacao)}</td>
+                <td class="mono">${t.contaId}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+    } catch(e) {
+      el.innerHTML = `<div class="error-box">Erro ao conectar na API: ${e.message}</div>`;
+    }
+  }
+
+  loadClientes();
+  loadContas();
+  loadTransacoes();
+</script>
+</body>
+</html>
