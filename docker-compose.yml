@@ -32,7 +32,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/orbitalguard_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/orbitalguard_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
       SPRING_DATASOURCE_USERNAME: orbital
       SPRING_DATASOURCE_PASSWORD: orbital123
       APP_ENV: production
