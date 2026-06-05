@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/cidades")
+@RequestMapping(value = "/cidades", produces = "application/json;charset=UTF-8")
 public class CidadeController {
 
     private final CidadeRepository repo;

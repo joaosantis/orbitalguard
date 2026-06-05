@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/alertas")
+@RequestMapping(value = "/alertas", produces = "application/json;charset=UTF-8")
 public class AlertaController {
 
     private final AlertaRepository repo;
