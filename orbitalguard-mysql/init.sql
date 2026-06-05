@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS orbitalguard_db;
+CREATE DATABASE IF NOT EXISTS orbitalguard_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE orbitalguard_db;
 
 CREATE TABLE IF NOT EXISTS cidade (
@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS cidade (
     latitude    DOUBLE       NOT NULL,
     longitude   DOUBLE       NOT NULL,
     populacao   INT
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS alerta (
     id            BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS alerta (
     data_hora     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ativo         TINYINT(1)   NOT NULL DEFAULT 1,
     CONSTRAINT fk_alerta_cidade FOREIGN KEY (cidade_id) REFERENCES cidade(id)
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Cidades monitoradas
 INSERT INTO cidade (nome, estado, latitude, longitude, populacao) VALUES
