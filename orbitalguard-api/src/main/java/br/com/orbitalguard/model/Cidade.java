@@ -1,5 +1,6 @@
 package br.com.orbitalguard.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.List;
@@ -28,6 +29,7 @@ public class Cidade {
     @Column(name = "populacao")
     private Integer populacao;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "cidade", cascade = CascadeType.ALL)
     private List<Alerta> alertas;
 }
