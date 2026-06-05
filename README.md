@@ -26,32 +26,7 @@ O **OrbitalGuard** conecta a exploração espacial com problemas reais na Terra.
 
 ## Arquitetura Macro
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        AZURE VM                             │
-│                                                             │
-│   ┌──────────────────────────────────────────────────────┐  │
-│   │              Docker Compose Network                  │  │
-│   │                 (orbitalguard-net)                   │  │
-│   │                                                      │  │
-│   │  ┌──────────────────────┐  ┌──────────────────────┐  │  │
-│   │  │  orbitalguard-api    │  │  orbitalguard-mysql   │  │  │
-│   │  │  rm555287            │  │  rm555287             │  │  │
-│   │  │                      │  │                       │  │  │
-│   │  │  Spring Boot 3.2     │──▶  MySQL 8.0            │  │  │
-│   │  │  Java 17             │  │                       │  │  │
-│   │  │  USER: orbital       │  │  Volume nomeado:      │  │  │
-│   │  │  WORKDIR: /orbital   │  │  orbitalguard_data    │  │  │
-│   │  │  PORT: 8080          │  │  PORT: 3306           │  │  │
-│   │  └──────────────────────┘  └──────────────────────┘  │  │
-│   └──────────────────────────────────────────────────────┘  │
-│                                                             │
-│   Portas abertas: 8080 (API), 3306 (MySQL)                  │
-└─────────────────────────────────────────────────────────────┘
-         ▲                              ▲
-         │                              │
-   Usuário / App Mobile           Satélites / IoT ESP32
-```
+![Arquitetura Macro OrbitalGuard](arquitetura-orbitalguard.drawio.png)
 
 ---
 
