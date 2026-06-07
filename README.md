@@ -1,4 +1,4 @@
-# OrbitalGuard — Global Solution FIAP 2025
+# OrbitalGuard — Global Solution FIAP 2026
 
 > **Tecnologia espacial salvando vidas na Terra.**
 
@@ -223,4 +223,4 @@ docker compose up -d --build
 ## Autor
 
 **João Santis** — RM555287  
-FIAP — Global Solution 2025 — DevOps Tools & Cloud Computing
+FIAP — Global Solution 2026 — DevOps Tools & Cloud Computing
