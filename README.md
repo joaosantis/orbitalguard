@@ -14,6 +14,14 @@ Sistema inteligente de monitoramento e prevenção de desastres naturais (enchen
 
 ---
 
+## Vídeo Demonstrativo
+
+[![OrbitalGuard - Demonstração](https://img.youtube.com/vi/PABMV5TqBv4/0.jpg)](https://youtu.be/PABMV5TqBv4)
+
+🔗 [https://youtu.be/PABMV5TqBv4](https://youtu.be/PABMV5TqBv4)
+
+---
+
 ## Descrição da Solução
 
 O **OrbitalGuard** conecta a exploração espacial com problemas reais na Terra. Satélites coletam dados climáticos e orbitais que são processados por uma IA para identificar riscos de desastres naturais. A API centraliza alertas em tempo real, permitindo que autoridades e cidadãos tomem decisões antes que o desastre aconteça.
