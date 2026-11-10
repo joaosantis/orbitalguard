@@ -1,8 +1,8 @@
-# OrbitalGuard — Global Solution FIAP 2026
+# OrbitalGuard — Global Solution FIAP 2026/2
 
-> **Tecnologia espacial salvando vidas na Terra.**
+> **CitizenTech: tecnologia para o cidadão — clima e emergências.**
 
-Sistema inteligente de monitoramento e prevenção de desastres naturais (enchentes, queimadas e deslizamentos) utilizando dados de satélite, sensores IoT e inteligência artificial.
+Sistema inteligente de monitoramento e prevenção de desastres naturais (enchentes, deslizamentos e queimadas) utilizando dados de satélite, sensores IoT e inteligência artificial.
 
 ---
 
@@ -10,7 +10,13 @@ Sistema inteligente de monitoramento e prevenção de desastres naturais (enchen
 
 | RM | Nome |
 |---|---|
-| RM555287 | João Santis |
+| RM555287 | João Victor Rebello de Santis |
+| RM562279 | Raphael Gomes Mancera |
+| RM566366 | Bruno Vinicius Barbosa |
+| RM566087 | Guilherme de Andrade Martini |
+| RM555427 | Gabriel Gomes Mancera |
+
+**Turma:** 2TDSPW — DevOps Tools & Cloud Computing
 
 ---
 
@@ -24,7 +30,7 @@ Sistema inteligente de monitoramento e prevenção de desastres naturais (enchen
 
 ## Descrição da Solução
 
-O **OrbitalGuard** conecta a exploração espacial com problemas reais na Terra. Satélites coletam dados climáticos e orbitais que são processados por uma IA para identificar riscos de desastres naturais. A API centraliza alertas em tempo real, permitindo que autoridades e cidadãos tomem decisões antes que o desastre aconteça.
+O **OrbitalGuard** conecta a exploração espacial com problemas reais na Terra. Satélites coletam dados climáticos e orbitais que são processados por IA para identificar riscos de desastres naturais. A API centraliza alertas em tempo real, permitindo que autoridades e cidadãos tomem decisões antes que o desastre aconteça.
 
 **Problema resolvido:** cidades brasileiras sofrem com enchentes, deslizamentos e queimadas por falta de monitoramento preventivo eficiente.
 
@@ -32,7 +38,7 @@ O **OrbitalGuard** conecta a exploração espacial com problemas reais na Terra.
 
 ---
 
-## Arquitetura Macro
+## Arquitetura
 
 ![Arquitetura Macro OrbitalGuard](arquitetura-orbitalguard.drawio.png)
 
@@ -44,10 +50,12 @@ O **OrbitalGuard** conecta a exploração espacial com problemas reais na Terra.
 |---|---|
 | Linguagem | Java 17 |
 | Framework | Spring Boot 3.2 |
-| ORM | Spring Data JPA |
+| ORM | Spring Data JPA + Lombok |
 | Banco de Dados | MySQL 8.0 |
 | Containerização | Docker + Docker Compose |
-| Cloud | Microsoft Azure (VM Ubuntu 24.04) |
+| CI/CD | Azure DevOps Pipelines |
+| Testes | JUnit 5 + Mockito (via Spring Boot Test) |
+| Cloud | Microsoft Azure (ACI — Azure Container Instances) |
 
 ---
 
@@ -55,31 +63,41 @@ O **OrbitalGuard** conecta a exploração espacial com problemas reais na Terra.
 
 ```
 orbitalguard/
+├── azure-pipeline.yml          # CI/CD pipeline — Azure DevOps
+├── docker-compose.yml          # Orquestração local
+├── dockerfiles/
+│   └── Dockerfile              # Build multi-stage (Maven → JRE Alpine)
+├── scripts/
+│   ├── script-bd.sql           # DDL + dados iniciais do banco
+│   └── provision.azcli         # Provisionamento de infraestrutura Azure CLI
 ├── orbitalguard-api/
-│   ├── Dockerfile
 │   ├── pom.xml
-│   └── src/main/java/br/com/orbitalguard/
-│       ├── OrbitalGuardApplication.java
-│       ├── controller/
-│       │   ├── CidadeController.java
-│       │   └── AlertaController.java
-│       ├── model/
-│       │   ├── Cidade.java
-│       │   └── Alerta.java
-│       └── repository/
-│           ├── CidadeRepository.java
-│           └── AlertaRepository.java
-├── orbitalguard-mysql/
-│   └── init.sql
-├── docker-compose.yml
-└── README.md
+│   └── src/
+│       ├── main/java/br/com/orbitalguard/
+│       │   ├── OrbitalGuardApplication.java
+│       │   ├── controller/
+│       │   │   ├── CidadeController.java
+│       │   │   └── AlertaController.java
+│       │   ├── model/
+│       │   │   ├── Cidade.java
+│       │   │   └── Alerta.java
+│       │   └── repository/
+│       │       ├── CidadeRepository.java
+│       │       └── AlertaRepository.java
+│       └── test/java/br/com/orbitalguard/
+│           ├── OrbitalGuardApplicationTests.java
+│           └── controller/
+│               ├── CidadeControllerTest.java
+│               └── AlertaControllerTest.java
+└── orbitalguard-mysql/
+    └── init.sql
 ```
 
 ---
 
 ## Banco de Dados
 
-Duas tabelas com relacionamento (FK):
+Duas tabelas com relacionamento FK:
 
 **cidade** — cidades monitoradas pelo sistema
 - `id`, `nome`, `estado`, `latitude`, `longitude`, `populacao`
@@ -89,9 +107,26 @@ Duas tabelas com relacionamento (FK):
 
 ---
 
+## CI/CD — Azure DevOps Pipeline
+
+O arquivo [`azure-pipeline.yml`](azure-pipeline.yml) define o pipeline com dois estágios:
+
+| Estágio | Trigger | O que faz |
+|---|---|---|
+| **Build** | Push ou PR para `main` | Java 17, `mvn test`, publica resultados JUnit, `mvn package`, publica artefato |
+| **Release** | Após Build com sucesso em `main` | Deploy automático no Azure Container Instances |
+
+### Branch Policy (configurar no Azure DevOps)
+- Requer PR para fazer merge em `main`
+- Reviewer obrigatório: RM555287 (João Victor)
+- Deve ter Work Item linkado
+- Build deve passar antes do merge
+
+---
+
 ## Endpoints da API
 
-Base URL: `http://<IP_DA_VM>:8080`
+Base URL: `http://<FQDN_ACI>:8080`
 
 ### Cidades
 | Método | Endpoint | Descrição |
@@ -115,120 +150,92 @@ Base URL: `http://<IP_DA_VM>:8080`
 
 ---
 
-## How To — Executar o Projeto (do clone à nuvem)
+## How To — Executar Localmente
 
 ### Pré-requisitos
 
-- Git instalado
-- Docker e Docker Compose instalados
-- (Nuvem) VM Azure com Ubuntu 24.04 e portas 8080 e 3306 abertas no NSG
+- Git, Docker e Docker Compose instalados
 
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/joaosantis/orbitalguard.git
-cd orbitalguard
+git clone https://dev.azure.com/<org>/OrbitalGuard/_git/OrbitalGuard
+cd OrbitalGuard
 ```
 
-### 2. Subir os containers em background
+### 2. Subir os containers
 
 ```bash
 docker compose up -d --build
 ```
 
-Aguarde ~40 segundos para o MySQL inicializar completamente.
+Aguarde ~40 segundos para o MySQL inicializar.
 
-### 3. Verificar se os containers estão rodando
+### 3. Verificar containers
 
 ```bash
 docker ps
 ```
 
-### 4. Ver logs dos containers
-
-```bash
-# Logs do banco
-docker logs orbitalguard-mysql-rm555287
-
-# Logs da API
-docker logs orbitalguard-api-rm555287
-```
-
-### 5. Testar a API
-
-```bash
-# Listar cidades
-curl http://localhost:8080/cidades
-
-# Listar alertas ativos
-curl http://localhost:8080/alertas/ativos
-
-# Criar novo alerta
-curl -X POST http://localhost:8080/alertas \
-  -H "Content-Type: application/json" \
-  -d '{"cidade":{"id":1},"nivel":"ALTO","descricao":"Novo alerta orbital","tipoDesastre":"ENCHENTE"}'
-```
-
-### 6. Acessar o container da API (demonstração exec)
-
-```bash
-docker container exec -it orbitalguard-api-rm555287 sh
-# Dentro do container:
-pwd
-ls -l
-whoami
-exit
-```
-
-### 7. Acessar o container do banco (demonstração exec + SELECT)
+### 4. Executar SELECT nas duas tabelas
 
 ```bash
 docker container exec -it orbitalguard-mysql-rm555287 bash
-# Dentro do container:
-pwd
-ls -l
-whoami
 mysql -u orbital -porbital123 orbitalguard_db
-# Dentro do MySQL:
+
 SELECT * FROM cidade;
 SELECT * FROM alerta;
-SELECT c.nome, a.nivel, a.tipo_desastre FROM alerta a JOIN cidade c ON a.cidade_id = c.id;
+SELECT c.nome, a.nivel, a.tipo_desastre
+FROM alerta a JOIN cidade c ON a.cidade_id = c.id
+WHERE a.ativo = 1;
 exit
 exit
 ```
 
-### 8. Parar os containers
+### 5. Parar os containers
 
 ```bash
 docker compose down
 ```
 
-### 9. Remover também o volume (reset completo)
+---
+
+## How To — Provisionar na Azure (Azure CLI)
 
 ```bash
-docker compose down -v
+# Autenticar no Azure
+az login
+
+# Executar script de provisionamento
+bash scripts/provision.azcli
 ```
+
+O script cria automaticamente:
+- Resource Group `rg-orbitalguard-gs2026`
+- Container MySQL 8.0
+- Container da API Spring Boot com DNS público
 
 ---
 
-## Configuração na Azure VM
+## How To — Executar os Testes
 
 ```bash
-# Instalar Docker na VM Ubuntu
-sudo apt update
-sudo apt install -y docker.io docker-compose-v2
-sudo usermod -aG docker $USER
-newgrp docker
-
-# Clonar e executar
-git clone https://github.com/joaosantis/orbitalguard.git
-cd orbitalguard
-docker compose up -d --build
+cd orbitalguard-api
+mvn test
 ```
+
+Os testes usam H2 (in-memory) — não precisam de MySQL rodando.
 
 ---
 
-## Autor
+## Autores
 
-**João Santis** — RM555287  
-FIAP — Global Solution 2026 — DevOps Tools & Cloud Computing
+| RM | Nome |
+|---|---|
+| RM555287 | João Victor Rebello de Santis |
+| RM562279 | Raphael Gomes Mancera |
+| RM566366 | Bruno Vinicius Barbosa |
+| RM566087 | Guilherme de Andrade Martini |
+| RM555427 | Gabriel Gomes Mancera |
+
+FIAP — Global Solution 2026/2 — DevOps Tools & Cloud Computing

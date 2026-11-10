@@ -1,0 +1,131 @@
+#!/bin/bash
+# =================================================================
+# OrbitalGuard - Script de Provisionamento Azure
+# Global Solution 2026/2 - DevOps Tools & Cloud Computing
+# FIAP - Turma 2TDSPW
+# RM: 555287 | 562279 | 566366 | 566087 | 555427
+# =================================================================
+# Como usar:
+#   az login
+#   chmod +x provision.azcli
+#   ./provision.azcli
+# =================================================================
+
+set -e
+
+# ------------------------------------------------------------------
+# VARIAVEIS DE CONFIGURACAO
+# ------------------------------------------------------------------
+RESOURCE_GROUP="rg-orbitalguard-gs2026"
+LOCATION="eastus"
+CONTAINER_GROUP="cg-orbitalguard"
+API_CONTAINER="orbitalguard-api"
+MYSQL_CONTAINER="orbitalguard-mysql"
+DNS_LABEL="orbitalguard-rm555287"
+
+MYSQL_DATABASE="orbitalguard_db"
+MYSQL_USER="orbital"
+MYSQL_PASSWORD="orbital123"
+MYSQL_ROOT_PASSWORD="root123"
+
+API_IMAGE="eclipse-temurin:17-jre-alpine"   # substitua pela imagem publicada no ACR
+MYSQL_IMAGE="mysql:8.0"
+
+# ------------------------------------------------------------------
+# 1. CRIAR RESOURCE GROUP
+# ------------------------------------------------------------------
+echo "=== [1/5] Criando Resource Group: $RESOURCE_GROUP em $LOCATION ==="
+az group create \
+    --name "$RESOURCE_GROUP" \
+    --location "$LOCATION" \
+    --output table
+
+# ------------------------------------------------------------------
+# 2. CRIAR CONTAINER MySQL
+# ------------------------------------------------------------------
+echo "=== [2/5] Criando container MySQL ==="
+az container create \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$MYSQL_CONTAINER" \
+    --image "$MYSQL_IMAGE" \
+    --cpu 1 \
+    --memory 1 \
+    --ports 3306 \
+    --environment-variables \
+        MYSQL_DATABASE="$MYSQL_DATABASE" \
+        MYSQL_USER="$MYSQL_USER" \
+        MYSQL_ROOT_PASSWORD="$MYSQL_ROOT_PASSWORD" \
+    --secure-environment-variables \
+        MYSQL_PASSWORD="$MYSQL_PASSWORD" \
+    --restart-policy Always \
+    --output table
+
+echo "Aguardando MySQL inicializar (60s)..."
+sleep 60
+
+# ------------------------------------------------------------------
+# 3. OBTER IP DO CONTAINER MySQL
+# ------------------------------------------------------------------
+MYSQL_IP=$(az container show \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$MYSQL_CONTAINER" \
+    --query "ipAddress.ip" \
+    --output tsv)
+
+echo "MySQL IP: $MYSQL_IP"
+
+# ------------------------------------------------------------------
+# 4. CRIAR CONTAINER API Spring Boot
+# ------------------------------------------------------------------
+echo "=== [3/5] Criando container OrbitalGuard API ==="
+SPRING_DS_URL="jdbc:mysql://${MYSQL_IP}:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8"
+
+az container create \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$API_CONTAINER" \
+    --image "$API_IMAGE" \
+    --cpu 1 \
+    --memory 1 \
+    --ports 8080 \
+    --dns-name-label "$DNS_LABEL" \
+    --environment-variables \
+        SPRING_DATASOURCE_URL="$SPRING_DS_URL" \
+        SPRING_DATASOURCE_USERNAME="$MYSQL_USER" \
+        APP_ENV="production" \
+    --secure-environment-variables \
+        SPRING_DATASOURCE_PASSWORD="$MYSQL_PASSWORD" \
+    --restart-policy Always \
+    --output table
+
+# ------------------------------------------------------------------
+# 5. EXIBIR INFORMACOES DO DEPLOY
+# ------------------------------------------------------------------
+echo "=== [4/5] Coletando informacoes dos containers ==="
+
+API_IP=$(az container show \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$API_CONTAINER" \
+    --query "ipAddress.ip" \
+    --output tsv)
+
+API_FQDN=$(az container show \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$API_CONTAINER" \
+    --query "ipAddress.fqdn" \
+    --output tsv)
+
+echo ""
+echo "=== [5/5] DEPLOY CONCLUIDO ==="
+echo "========================================"
+echo "  OrbitalGuard API"
+echo "  IP:   http://$API_IP:8080"
+echo "  FQDN: http://$API_FQDN:8080"
+echo "  Endpoints:"
+echo "    GET http://$API_FQDN:8080/cidades"
+echo "    GET http://$API_FQDN:8080/alertas"
+echo "    GET http://$API_FQDN:8080/alertas/ativos"
+echo "========================================"
+echo ""
+echo "Resource Group: $RESOURCE_GROUP"
+echo "Para remover todos os recursos:"
+echo "  az group delete --name $RESOURCE_GROUP --yes --no-wait"

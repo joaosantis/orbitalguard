@@ -1,0 +1,109 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
+  MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+  IMAGE_NAME: 'orbitalguard-api'
+  IMAGE_TAG: '$(Build.BuildId)'
+
+stages:
+  - stage: Build
+    displayName: 'Build e Testes Automatizados'
+    jobs:
+      - job: BuildJob
+        displayName: 'Compilar, Testar e Empacotar'
+        steps:
+
+          - task: JavaToolInstaller@0
+            displayName: 'Configurar Java 17'
+            inputs:
+              versionSpec: '17'
+              jdkArchitectureOption: 'x64'
+              jdkSourceOption: 'PreInstalled'
+
+          - task: Cache@2
+            displayName: 'Cache dependencias Maven'
+            inputs:
+              key: 'maven | "$(Agent.OS)" | orbitalguard-api/pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+                maven
+              path: $(MAVEN_CACHE_FOLDER)
+
+          - script: |
+              cd orbitalguard-api
+              mvn test $(MAVEN_OPTS)
+            displayName: 'Executar testes automatizados (JUnit)'
+
+          - task: PublishTestResults@2
+            displayName: 'Publicar resultados dos testes'
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: 'orbitalguard-api/target/surefire-reports/TEST-*.xml'
+              testRunTitle: 'OrbitalGuard - Testes Unitarios'
+              failTaskOnFailedTests: true
+
+          - script: |
+              cd orbitalguard-api
+              mvn package -DskipTests $(MAVEN_OPTS)
+            displayName: 'Empacotar aplicacao (JAR)'
+
+          - task: CopyFiles@2
+            displayName: 'Copiar artefatos para staging'
+            inputs:
+              SourceFolder: '$(System.DefaultWorkingDirectory)'
+              Contents: |
+                orbitalguard-api/target/*.jar
+                dockerfiles/Dockerfile
+                docker-compose.yml
+                scripts/**
+              TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publicar artefato de deploy'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'orbitalguard-deploy'
+              publishLocation: 'Container'
+
+  - stage: Release
+    displayName: 'Deploy no Azure Container Instances'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployACI
+        displayName: 'Deploy para ACI'
+        environment: 'producao'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: |
+                    echo "=== Iniciando deploy do OrbitalGuard ==="
+                    echo "Build ID: $(Build.BuildId)"
+                    echo "Branch: $(Build.SourceBranch)"
+                    echo "Artefato: orbitalguard-deploy"
+                    echo "Para executar o deploy completo, rode: scripts/provision.azcli"
+                  displayName: 'Informacoes do deploy'
+
+                - task: AzureCLI@2
+                  displayName: 'Verificar recursos Azure'
+                  inputs:
+                    azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      echo "Resource Group: $(AZURE_RG)"
+                      az group show --name $(AZURE_RG) --query "name" -o tsv || echo "RG nao encontrado"
