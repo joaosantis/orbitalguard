@@ -1,0 +1,11 @@
+# =================================================================
+# OrbitalGuard - Dockerfile MySQL
+# Imagem customizada com schema e dados pre-carregados
+# =================================================================
+FROM mysql:8.0
+
+ENV MYSQL_DATABASE=orbitalguard_db
+
+COPY orbitalguard-mysql/init.sql /docker-entrypoint-initdb.d/init.sql
+
+EXPOSE 3306
