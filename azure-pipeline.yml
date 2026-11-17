@@ -60,8 +60,6 @@ stages:
       - deployment: Deploy
         displayName: 'Build Docker + Push ACR + Reiniciar ACI'
         environment: 'orbitalguard-producao'
-        pool:
-          vmImage: 'ubuntu-latest'
         strategy:
           runOnce:
             deploy:
@@ -72,39 +70,35 @@ stages:
                   artifact: '$(ARTIFACT_NAME)'
 
                 - task: AzureCLI@2
-                  displayName: 'Build imagem API e push para ACR'
+                  displayName: 'Build imagem API no ACR (az acr build)'
                   inputs:
                     azureSubscription: 'azure-orbitalguard-connection'
-                    scriptType: 'bash'
+                    scriptType: 'ps'
                     scriptLocation: 'inlineScript'
                     inlineScript: |
-                      acrName="orbitalguard$(RM)"
-                      acrServer="$acrName.azurecr.io"
-
-                      ACR_TOKEN=$(az acr login --name $acrName --expose-token --output tsv --query accessToken)
-                      echo "$ACR_TOKEN" | docker login $acrServer \
-                        -u 00000000-0000-0000-0000-000000000000 --password-stdin
-
-                      docker build \
-                        -t $acrServer/orbitalguard-api:$(IMAGE_TAG) \
-                        -f dockerfiles/Dockerfile .
-                      docker push $acrServer/orbitalguard-api:$(IMAGE_TAG)
-
-                      docker build \
-                        -t $acrServer/orbitalguard-mysql:$(IMAGE_TAG) \
-                        -f dockerfiles/Dockerfile.mysql .
-                      docker push $acrServer/orbitalguard-mysql:$(IMAGE_TAG)
-
-                      echo "Imagens publicadas no ACR com tag: $(IMAGE_TAG)"
+                      $acrName = "orbitalguard$(RM)"
+                      Write-Host "Construindo imagem API no ACR: $acrName"
+                      az acr build `
+                        --registry $acrName `
+                        --image "orbitalguard-api:$(IMAGE_TAG)" `
+                        --file dockerfiles/Dockerfile `
+                        .
+                      Write-Host "Imagem API publicada no ACR com tag: $(IMAGE_TAG)"
 
                 - task: AzureCLI@2
                   displayName: 'Reiniciar container API no ACI'
                   inputs:
                     azureSubscription: 'azure-orbitalguard-connection'
-                    scriptType: 'bash'
+                    scriptType: 'ps'
                     scriptLocation: 'inlineScript'
                     inlineScript: |
-                      az container restart \
-                        --resource-group "rg-orbitalguard-$(RM)" \
-                        --name "api-orbitalguard" \
-                        --output table || echo "Container nao encontrado - execute os scripts de provisionamento primeiro"
+                      $rg = "rg-orbitalguard-$(RM)"
+                      $container = "api-orbitalguard"
+                      Write-Host "Reiniciando container $container no Resource Group $rg"
+                      az container restart `
+                        --resource-group $rg `
+                        --name $container `
+                        --output table
+                      if ($LASTEXITCODE -ne 0) {
+                        Write-Host "Container nao encontrado - execute os scripts de provisionamento primeiro"
+                      }

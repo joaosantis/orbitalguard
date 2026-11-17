@@ -124,11 +124,12 @@ O arquivo [`azure-pipeline.yml`](azure-pipeline.yml) define o pipeline com dois 
 
 ---
 
-## Endpoints da API
+## Endpoints da API (CRUD em JSON)
 
-Base URL: `http://<FQDN_ACI>:8080`
+Base URL: `http://api-orbitalguard-rm555287.eastus2.azurecontainer.io:8080`
 
 ### Cidades
+
 | Método | Endpoint | Descrição |
 |---|---|---|
 | GET | `/cidades` | Lista todas as cidades |
@@ -137,7 +138,60 @@ Base URL: `http://<FQDN_ACI>:8080`
 | PUT | `/cidades/{id}` | Atualiza cidade |
 | DELETE | `/cidades/{id}` | Remove cidade |
 
+#### POST /cidades — Criar cidade
+```json
+{
+  "nome": "Campinas",
+  "estado": "SP",
+  "latitude": -22.9056,
+  "longitude": -47.0608,
+  "populacao": 1200000
+}
+```
+**Resposta 201 Created:**
+```json
+{
+  "id": 11,
+  "nome": "Campinas",
+  "estado": "SP",
+  "latitude": -22.9056,
+  "longitude": -47.0608,
+  "populacao": 1200000
+}
+```
+
+#### GET /cidades/1 — Buscar por ID
+**Resposta 200 OK:**
+```json
+{
+  "id": 1,
+  "nome": "São Paulo",
+  "estado": "SP",
+  "latitude": -23.5505,
+  "longitude": -46.6333,
+  "populacao": 12300000
+}
+```
+
+#### PUT /cidades/11 — Atualizar cidade
+```json
+{
+  "nome": "Campinas",
+  "estado": "SP",
+  "latitude": -22.9056,
+  "longitude": -47.0608,
+  "populacao": 1250000
+}
+```
+**Resposta 200 OK:** retorna o objeto atualizado
+
+#### DELETE /cidades/11 — Remover cidade
+**Resposta 204 No Content**
+
+---
+
 ### Alertas
+
 | Método | Endpoint | Descrição |
 |---|---|---|
 | GET | `/alertas` | Lista todos os alertas |
@@ -147,6 +201,59 @@ Base URL: `http://<FQDN_ACI>:8080`
 | POST | `/alertas` | Cria novo alerta |
 | PUT | `/alertas/{id}` | Atualiza alerta |
 | DELETE | `/alertas/{id}` | Remove alerta |
+
+#### POST /alertas — Criar alerta
+```json
+{
+  "cidadeId": 1,
+  "nivel": "ALTO",
+  "descricao": "Risco de enchente detectado via satélite na região leste",
+  "tipoDesastre": "ENCHENTE"
+}
+```
+**Resposta 201 Created:**
+```json
+{
+  "id": 13,
+  "cidade": { "id": 1, "nome": "São Paulo", "estado": "SP" },
+  "nivel": "ALTO",
+  "descricao": "Risco de enchente detectado via satélite na região leste",
+  "tipoDesastre": "ENCHENTE",
+  "dataHora": "2026-11-16T10:30:00",
+  "ativo": true
+}
+```
+
+#### GET /alertas/ativos — Listar alertas ativos
+**Resposta 200 OK:**
+```json
+[
+  {
+    "id": 1,
+    "cidade": { "id": 1, "nome": "São Paulo", "estado": "SP" },
+    "nivel": "ALTO",
+    "descricao": "Risco elevado de alagamentos na zona leste",
+    "tipoDesastre": "ENCHENTE",
+    "dataHora": "2026-06-01T08:00:00",
+    "ativo": true
+  }
+]
+```
+
+#### PUT /alertas/1 — Atualizar alerta
+```json
+{
+  "cidadeId": 1,
+  "nivel": "CRITICO",
+  "descricao": "Situação agravada — nível crítico confirmado",
+  "tipoDesastre": "ENCHENTE",
+  "ativo": true
+}
+```
+**Resposta 200 OK:** retorna o objeto atualizado
+
+#### DELETE /alertas/13 — Remover alerta
+**Resposta 204 No Content**
 
 ---
 
