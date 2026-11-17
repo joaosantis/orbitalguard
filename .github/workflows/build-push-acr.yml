@@ -33,16 +33,13 @@ jobs:
         run: mvn package -DskipTests -f orbitalguard-api/pom.xml -q
 
       - name: Login no ACR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.ACR_LOGIN_SERVER }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+        run: |
+          echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ env.ACR_LOGIN_SERVER }} \
+            -u "${{ secrets.ACR_USERNAME }}" --password-stdin
 
       - name: Build e Push imagem API
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: dockerfiles/Dockerfile
-          push: true
-          tags: ${{ env.ACR_LOGIN_SERVER }}/${{ env.API_IMAGE }}:${{ env.IMAGE_TAG }}
+        run: |
+          docker build \
+            -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.API_IMAGE }}:${{ env.IMAGE_TAG }} \
+            -f dockerfiles/Dockerfile .
+          docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.API_IMAGE }}:${{ env.IMAGE_TAG }}
