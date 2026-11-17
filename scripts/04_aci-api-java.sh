@@ -45,6 +45,7 @@ az container create \
     SPRING_DATASOURCE_USERNAME=$(az keyvault secret show --name spring-datasource-username --vault-name "$keyVaultName" --query value -o tsv) \
   --secure-environment-variables \
     SPRING_DATASOURCE_PASSWORD=$(az keyvault secret show --name spring-datasource-password --vault-name "$keyVaultName" --query value -o tsv) \
+  --location eastus2 \
   --restart-policy Always \
   --output table
 

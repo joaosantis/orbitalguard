@@ -49,6 +49,7 @@ az container create \
   --secure-environment-variables \
     MYSQL_ROOT_PASSWORD=$(az keyvault secret show --vault-name "$keyVaultName" --name mysql-root-password --query value -o tsv) \
     MYSQL_PASSWORD=$(az keyvault secret show --vault-name "$keyVaultName" --name mysql-password --query value -o tsv) \
+  --location eastus2 \
   --restart-policy Always \
   --output table
 
