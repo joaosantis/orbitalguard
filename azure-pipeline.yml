@@ -60,6 +60,8 @@ stages:
       - deployment: Deploy
         displayName: 'Build Docker + Push ACR + Reiniciar ACI'
         environment: 'orbitalguard-producao'
+        pool:
+          vmImage: 'ubuntu-latest'
         strategy:
           runOnce:
             deploy:
@@ -72,31 +74,33 @@ stages:
                 - task: AzureCLI@2
                   displayName: 'Build imagem API e push para ACR'
                   inputs:
-                    azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+                    azureSubscription: 'azure-orbitalguard-connection'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
                     inlineScript: |
                       acrName="orbitalguard$(RM)"
-                      az acr login --name $acrName
+                      acrServer="$acrName.azurecr.io"
+
+                      ACR_TOKEN=$(az acr login --name $acrName --expose-token --output tsv --query accessToken)
+                      echo "$ACR_TOKEN" | docker login $acrServer \
+                        -u 00000000-0000-0000-0000-000000000000 --password-stdin
 
                       docker build \
-                        -t $acrName.azurecr.io/orbitalguard-api:$(IMAGE_TAG) \
+                        -t $acrServer/orbitalguard-api:$(IMAGE_TAG) \
                         -f dockerfiles/Dockerfile .
-
-                      docker push $acrName.azurecr.io/orbitalguard-api:$(IMAGE_TAG)
+                      docker push $acrServer/orbitalguard-api:$(IMAGE_TAG)
 
                       docker build \
-                        -t $acrName.azurecr.io/orbitalguard-mysql:$(IMAGE_TAG) \
+                        -t $acrServer/orbitalguard-mysql:$(IMAGE_TAG) \
                         -f dockerfiles/Dockerfile.mysql .
-
-                      docker push $acrName.azurecr.io/orbitalguard-mysql:$(IMAGE_TAG)
+                      docker push $acrServer/orbitalguard-mysql:$(IMAGE_TAG)
 
                       echo "Imagens publicadas no ACR com tag: $(IMAGE_TAG)"
 
                 - task: AzureCLI@2
                   displayName: 'Reiniciar container API no ACI'
                   inputs:
-                    azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+                    azureSubscription: 'azure-orbitalguard-connection'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
                     inlineScript: |
