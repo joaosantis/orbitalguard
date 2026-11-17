@@ -24,13 +24,6 @@ stages:
       - job: Build
         displayName: 'Instalar, Compilar, Testar e Empacotar'
         steps:
-          - task: JavaToolInstaller@0
-            displayName: 'Configurar Java 17'
-            inputs:
-              versionSpec: '17'
-              jdkArchitectureOption: 'x64'
-              jdkSourceOption: 'PreInstalled'
-
           - task: Maven@4
             displayName: 'Maven - Compilar e executar testes'
             inputs:
@@ -40,9 +33,10 @@ stages:
               publishJUnitResults: true
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
               testRunTitle: 'OrbitalGuard - Testes Automatizados'
-              javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.17'
-              mavenVersionOption: 'Default'
+              javaHomeOption: 'Path'
+              jdkDirectory: 'C:\Program Files\Microsoft\jdk-17.0.21.21-hotspot'
+              mavenVersionOption: 'Path'
+              mavenDirectory: 'C:\Users\User\maven\apache-maven-3.9.6'
 
           - task: CopyFiles@2
             displayName: 'Preparar artefato JAR'
