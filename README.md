@@ -8,13 +8,9 @@ Sistema inteligente de monitoramento e prevenção de desastres naturais (enchen
 
 ## Equipe
 
-| RM | Nome |
-|---|---|
-| RM555287 | João Victor Rebello de Santis |
-| RM562279 | Raphael Gomes Mancera |
-| RM566366 | Bruno Vinicius Barbosa |
-| RM566087 | Guilherme de Andrade Martini |
-| RM555427 | Gabriel Gomes Mancera |
+| RM | Nome | Turma |
+|---|---|---|
+| RM555287 | João Victor Rebello de Santis | 2TDSPW |
 
 **Turma:** 2TDSPW — DevOps Tools & Cloud Computing
 
@@ -335,14 +331,10 @@ Os testes usam H2 (in-memory) — não precisam de MySQL rodando.
 
 ---
 
-## Autores
+## Autor
 
-| RM | Nome |
-|---|---|
-| RM555287 | João Victor Rebello de Santis |
-| RM562279 | Raphael Gomes Mancera |
-| RM566366 | Bruno Vinicius Barbosa |
-| RM566087 | Guilherme de Andrade Martini |
-| RM555427 | Gabriel Gomes Mancera |
+| RM | Nome | Turma |
+|---|---|---|
+| RM555287 | João Victor Rebello de Santis | 2TDSPW |
 
 FIAP — Global Solution 2026/2 — DevOps Tools & Cloud Computing
