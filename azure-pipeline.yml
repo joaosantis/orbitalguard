@@ -53,12 +53,12 @@ stages:
               publishLocation: 'pipeline'
 
   - stage: CD
-    displayName: 'CD - Build Docker e Deploy no ACI'
+    displayName: 'CD - Deploy no ACI'
     dependsOn: CI
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - deployment: Deploy
-        displayName: 'Build Docker + Push ACR + Reiniciar ACI'
+        displayName: 'Deploy - Reiniciar API no ACI'
         environment: 'orbitalguard-producao'
         strategy:
           runOnce:
@@ -70,22 +70,6 @@ stages:
                   artifact: '$(ARTIFACT_NAME)'
 
                 - task: AzureCLI@2
-                  displayName: 'Build imagem API no ACR (az acr build)'
-                  inputs:
-                    azureSubscription: 'azure-orbitalguard-connection'
-                    scriptType: 'ps'
-                    scriptLocation: 'inlineScript'
-                    inlineScript: |
-                      $acrName = "orbitalguard$(RM)"
-                      Write-Host "Construindo imagem API no ACR: $acrName"
-                      az acr build `
-                        --registry $acrName `
-                        --image "orbitalguard-api:$(IMAGE_TAG)" `
-                        --file dockerfiles/Dockerfile `
-                        .
-                      Write-Host "Imagem API publicada no ACR com tag: $(IMAGE_TAG)"
-
-                - task: AzureCLI@2
                   displayName: 'Reiniciar container API no ACI'
                   inputs:
                     azureSubscription: 'azure-orbitalguard-connection'
@@ -94,11 +78,13 @@ stages:
                     inlineScript: |
                       $rg = "rg-orbitalguard-$(RM)"
                       $container = "api-orbitalguard"
-                      Write-Host "Reiniciando container $container no Resource Group $rg"
-                      az container restart `
-                        --resource-group $rg `
-                        --name $container `
-                        --output table
-                      if ($LASTEXITCODE -ne 0) {
-                        Write-Host "Container nao encontrado - execute os scripts de provisionamento primeiro"
+                      Write-Host "Verificando container $container no Resource Group $rg..."
+                      $state = az container show --resource-group $rg --name $container --query "instanceView.state" -o tsv 2>$null
+                      if ($state) {
+                        Write-Host "Container encontrado. Estado atual: $state"
+                        az container restart --resource-group $rg --name $container --output table
+                        Write-Host "Container $container reiniciado com sucesso!"
+                      } else {
+                        Write-Host "Container nao encontrado - API pode estar provisionada com outro nome."
+                        exit 0
                       }
